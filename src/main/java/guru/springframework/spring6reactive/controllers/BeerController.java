@@ -22,45 +22,45 @@ public class BeerController {
     private final BeerService beerService;
 
     @DeleteMapping(BEER_PATH_ID)
-    ResponseEntity<Void> deleteById(@PathVariable("beerId") Integer beerId) {
-        beerService.deleteBeerById(beerId).subscribe();
-        return ResponseEntity.noContent().build();
+    Mono<ResponseEntity<Void>> deleteById(@PathVariable Integer beerId){
+        return beerService.deleteBeerById(beerId)
+                .thenReturn(ResponseEntity
+                                .noContent().build());
     }
 
     @PatchMapping(BEER_PATH_ID)
-    ResponseEntity<Void> patchBeer(@PathVariable("beerId") Integer beerId,
-                                   @Validated @RequestBody BeerDTO beerDTO) {
-        beerService.patchBeer(beerId, beerDTO).subscribe();
-        return ResponseEntity.ok().build();
+    Mono<ResponseEntity<Void>> patchExistingBeer(@PathVariable Integer beerId,
+                                              @Validated @RequestBody BeerDTO beerDTO){
+        return beerService.patchBeer(beerId, beerDTO)
+                .map(updatedDto -> ResponseEntity.ok().build());
     }
 
     @PutMapping(BEER_PATH_ID)
-    ResponseEntity<Void> updateExistingBeer(@PathVariable("beerId") Integer beerId,
-                                                  @Validated @RequestBody BeerDTO beerDTO) {
-        beerService.updateBeer(beerId, beerDTO).subscribe();
-        return ResponseEntity.ok().build();
+    Mono<ResponseEntity<Void>> updateExistingBeer(@PathVariable("beerId") Integer beerId,
+                                               @Validated @RequestBody BeerDTO beerDTO){
+        return beerService.updateBeer(beerId, beerDTO)
+                .map(savedDto -> ResponseEntity.noContent().build());
     }
 
+
+
     @PostMapping(BEER_PATH)
-    ResponseEntity<Void> createNewBeer(@Validated @RequestBody BeerDTO beerDTO) {
-        AtomicInteger atomicInteger = new AtomicInteger();
-
-        beerService.createNewBeer(beerDTO).subscribe(savedDto -> {
-           atomicInteger.set(savedDto.getId());
-        });
-
-        return ResponseEntity.created(UriComponentsBuilder
-                                .fromHttpUrl("http://localhost:8080/" + BEER_PATH
-                        + "/" + atomicInteger.get()).build().toUri()).build();
+    Mono<ResponseEntity<Void>> createNewBeer(@Validated @RequestBody BeerDTO beerDTO){
+       return beerService.createNewBeer(beerDTO)
+               .map(savedDto -> ResponseEntity.created(UriComponentsBuilder
+                       .fromHttpUrl("http://localhost:8080/" + BEER_PATH
+                               + "/" + savedDto.getId())
+                       .build().toUri())
+                       .build());
     }
 
     @GetMapping(BEER_PATH_ID)
-    Mono<BeerDTO> getBeerById(@PathVariable("beerId") Integer beerId) {
+    Mono<BeerDTO> getBeerById(@PathVariable("beerId") Integer beerId){
         return beerService.getBeerById(beerId);
     }
 
     @GetMapping(BEER_PATH)
-    public Flux<BeerDTO> listBeers() {
+    Flux<BeerDTO> listBeers(){
         return beerService.listBeers();
     }
 
